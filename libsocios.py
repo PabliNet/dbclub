@@ -59,7 +59,7 @@ class Socio:
         print_list = (
             ('Número de socio:', self.numero_de_socio),
             ('Nombre', self.nombre_completo),
-            ('Fecha de nacimiento', self.nacimiento),
+            ('Fecha de nacimiento', f'{self.nacimiento} ({self.edad} años)'),
             ('DNI', self.dni),
             ('Género', self.genero),
             ('Domicilio', self.domicilio),
@@ -90,7 +90,7 @@ class Socio:
 
     @property
     def edad(self):
-        _nacimiento = datetime.strptime(self.nacimiento, self.formato_fecha)
+        _nacimiento = datetime.strptime(self.nacimiento, CONFIG['FORMATO_FECHA'])
         retorno = self.hoy.year - _nacimiento.year
         retorno = retorno if si_paso(
             _nacimiento,
@@ -100,7 +100,7 @@ class Socio:
 
     @property
     def antiguedad(self):
-        _alta = datetime.strptime(self.alta, self.formato_fecha)
+        _alta = datetime.strptime(self.alta, CONFIG['FORMATO_FECHA'])
         retorno = self.hoy.year - _alta.year
         retorno = retorno if si_paso(
             _alta,

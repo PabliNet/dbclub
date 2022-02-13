@@ -107,6 +107,22 @@ def entrada (variable, tipo, letra=False):
                 break
     return valor
 
+def cambiar_opcion (n):
+    opciones_dict = {
+        'e': 'editar',
+        'b': 'baja',
+        'r': 'remueve',
+        'u': 'pago'
+    }
+    while True:
+        opcion = input(f'\n¿Desea \x1b[1;37;40me\x1b[0mditar, dar de \x1b[1;37;40mb\x1b[0maja o \x1b[1;37;40mr\x1b[0memover, actualizar \x1b[1;37;40mú\x1b[0mltimo pago del socio N° {n} o \x1b[1;37;40ms\x1b[0malir? ')
+        if opcion == 's':
+            exit()
+        elif opcion in opciones_dict:
+            return opciones_dict[opcion]
+        else:
+            print ('ERROR: Tiene que tipear B, R, U, o S.')
+
 entradas = (
     ('numero_de_socio', 'num'),
     ('nombre', 'str'),
@@ -160,9 +176,13 @@ opciones = parser.add_argument_group('group')
 opciones.add_argument('-a', '--alta', action='store_true', help='Nuevo socio')
 opciones.add_argument('-e', '--editar', type=int, help='Editar socio')
 opciones.add_argument('-b', '--baja', type=int, help='Baja socio')
+opciones.add_argument('-r', '--remueve', type=int, help='Remueve socio')
+opciones.add_argument('-l', '--lista', action='store_true', help='Lista socios')
 opciones.add_argument('-s', '--buscar', type=int, help='Buscar socio')
-opciones.add_argument('-p', '--pago', type=int, help='Actualizar último pago')
+opciones.add_argument('-u', '--ultimo', type=str, help='Actualizar último pago')
+opciones.add_argument('-f', '--filtro', type=str, help='Filtrar búsqueda')
 opciones.add_argument('-d', '--deudores', action='store_true', help='Lista de deudores')
+opciones.add_argument('-v', '--version', action='store_true', help='Muestra la versión de DB Club')
 args = parser.parse_args().__dict__
 
 if exists(db_file):
@@ -193,30 +213,16 @@ if opcion == 'alta':
     socio = Socio(*alta)
     db[alta[0]] = socio.__dict__
 
-    """socio1 = (Socio(32, 'Sandra', 'Xén', '8-6-1987', 35675434, 'Femenino', 'Trelles 2075',
-    'CABA', '1416', '1234567890', 1154321356, 'san432@gmail.com', 'adherente',
-    'ping-pon', '5-1-2014', True, '2-2-2021'))
-    socio2 = (Socio(222, 'Sandra', 'Xén', '8-6-1987', 35675434, 'Femenino', 'Trelles 2075',
-    'CABA', '1416', '1234567890', 1154321356, 'san432@gmail.com', 'adherente',
-    'ping-pon', '5-1-2014', True, '2-2-2021'))
-    aux_dict = socio1.__dict__
-    db[socio1.numero_de_socio] = aux_dict
-    aux_dict = socio2.__dict__
-    db[socio2.numero_de_socio] = aux_dict"""
-
-elif opcion in ('editar', 'baja', 'buscar', 'pago'):
-    if not str(valor) in db:
+elif opcion in ('editar', 'baja', 'remueve', 'lista', 'buscar', 'pago'):
+    if not str(valor) in db and opcion != 'lista':
         print (f'El socio número {valor} no existe')
         exit(1)
-    socio = Socio(*db[valor].values())
-    socio_dict = socio.__dict__
-    attrs = socio_dict.keys()
-    print (socio)
+    if opcion != 'lista':
+        socio = Socio(*db[valor].values())
+        socio_dict = socio.__dict__
+        attrs = socio_dict.keys()
+        print (socio)
     while True:
-        opciones_dict = {
-            'e': 'editar',
-            'b': 'baja'
-        }
         socio_edit = []
         if opcion == 'editar':
             print (db[valor])
@@ -241,7 +247,7 @@ elif opcion in ('editar', 'baja', 'buscar', 'pago'):
                     else:
                         socio_edit.append(db[valor][_campo[0]])
                     break
-            
+
             if str(socio_edit[0]) != valor:
                 db.pop(valor)
                 valor = str(socio_edit[0])
@@ -271,18 +277,24 @@ elif opcion in ('editar', 'baja', 'buscar', 'pago'):
             opcion = False
             if not opcion:
                 break
-        elif opcion == 'buscar':
+        elif opcion == 'remueve':
             while True:
-                opcion = input(f'\n¿Desea \x1b[1;37;40me\x1b[0mditar, dar de \
-\x1b[1;37;40mb\x1b[0maja o buscar \
-\x1b[1;37;40mo\x1b[0mtro socio o \x1b[1;37;40ms\x1b[0malir? ')
-                if opcion == 's':
-                    exit()
-                if opcion in opciones_dict:
-                    opcion = opciones_dict[opcion]
+                remueve = input(f'¿Desea remover al socio número {valor}? (sí o no) ').lower()
+                if remueve in ('sí', 'si', 'no'):
+                    if remueve in ('sí', 'si'):
+                        db.pop(valor)
+                        print (f'El socio número {valor} ha sido eliminado.')
                     break
                 else:
-                    print ('ERROR: Tiene que tipear B, O, o S.')
+                    print ('ERROR: Escriba sí o no.')
+            break
+        elif opcion == 'lista':
+            for k, v in db.items():
+                x = Socio(*v.values())
+                print ('{0:10} {1}'.format(k, x.nombre_completo))
+            break
+        elif opcion == 'buscar':
+            opcion = cambiar_opcion(valor)
         if opcion == 'pago':
             while True:
                 try:
@@ -295,6 +307,19 @@ elif opcion in ('editar', 'baja', 'buscar', 'pago'):
                     break
             db[valor]['ultimo_pago'] = pago
             break
+elif opcion == 'filtro':
+    valor = valor.lower()
+    aux = []
+    for k, v in db.items():
+        for test in (v['nombre'].lower(), v['apellido'].lower()):
+            if valor in test:
+                aux.append(k)
+                break
+    for k in aux:
+        socio = Socio(*db[k].values())
+        print ('{0:10} {1}'.format(k, socio.nombre_completo))
+    exit()
+
 elif opcion == 'deudores':
     deudores = []
     for n, d in db.items():
@@ -304,6 +329,8 @@ elif opcion == 'deudores':
     print (tabla('Socio N°', 'Nombre completo', 'Ult. pago', 'deuda'))
     for d in deudores:
         print (d)
+elif opcion == 'version':
+    print ('DB Club 0.2')
 
 #print (socio, '\nputo')
 if opcion !='deudores':
