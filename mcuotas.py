@@ -56,7 +56,6 @@ if __name__ == '__main__':
     meses_list = []
     for mes in meses.keys():
         meses_list.append(int(mes))
-    print (meses_list)
     i = meses_list[0]
     while i <= mes_actual:
         if not i in meses_list:
