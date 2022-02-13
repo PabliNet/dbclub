@@ -231,7 +231,7 @@ def tabla(s, n, u, d):
     return format(s, _s) + format(n, _n) + format(u, _u) + format(d, _d)
 
 salida = lambda label, dato: f'{label:\uFF65<22}{dato}'
-
+'''
 if __name__ == '__main__':
     db_file = 'socios.json'
     if exists(db_file):
@@ -240,3 +240,4 @@ if __name__ == '__main__':
     socio = Socio(*db['55'].values())
 
     print (socio.deuda)
+'''
