@@ -45,11 +45,11 @@ def entrada (variable, tipo, letra=False):
                 print ('Ingrese F, M u O.')
         elif tipo =='tel':
             valor = input(leyenda())
-            if es_numero(valor) and len(valor) == 10:
+            if len(valor) == 0 or (es_numero(valor) and len(valor) == 10):
                 break
         elif tipo =='cel':
             valor = input(leyenda())
-            if es_numero(valor) and len(valor) == 12:
+            if len(valor) == 0 or (es_numero(valor) and len(valor) == 12):
                 break
         elif tipo =='fecha':
             formato_fecha = CONFIG['FORMATO_FECHA']
@@ -69,7 +69,9 @@ def entrada (variable, tipo, letra=False):
         elif tipo =='email':
             er = '^[A-Za-z0-9!#$%&\'*/=?^_+-~\.]+@[A-Za-z0-9\-\.]+\.[A-Za-z]+$'
             valor = input(leyenda())
-            if bool(search(er, valor)):
+            if len(valor) == 0:
+                break
+            elif bool(search(er, valor)):
                 usuario, dominio = valor.split('@')
                 chars = usuario[0] + usuario[-1] + dominio[0] + dominio[-1]
                 if not '.' in chars:
