@@ -3,6 +3,8 @@ from os import get_terminal_size
 from os.path import exists
 from json import load, dump
 from datetime import datetime
+from time import strftime
+from mcuotas import sumar_mes
 
 if exists('setting.json'):
     with open('setting.json') as _config:
@@ -56,7 +58,7 @@ class Socio:
         self.adelento = adelanto
 
     def __str__(self) -> str:
-        print_list = (
+        print_list = [
             ('Número de socio:', self.numero_de_socio),
             ('Nombre', self.nombre_completo),
             ('Fecha de nacimiento', f'{self.nacimiento} ({self.edad} años)'),
@@ -73,8 +75,9 @@ class Socio:
             ('Fecha de alta', self.alta),
             ('Estado', 'Baja' if self.es_baja else 'En actividad'),
             ('Fecha de último pago', self.ultimo_pago)
-            )
-
+        ]
+        if self.deuda:
+            print_list.insert(-1, ('Deuda', self.deuda))
         for label, dato in print_list[:-1]:
             print(f'{label:\uFF65<22}{dato}')
 
@@ -137,8 +140,21 @@ class Socio:
             meses_deuda.pop()
             meses_deuda = [x.replace('-', '') for x in meses_deuda]
             total = 0
+            u_mes_cuotas = tuple(cuotas.keys())
+            u_mes_cuotas = u_mes_cuotas[-1]
+            u_cuota = cuotas[tuple(cuotas.keys())[-1]]
+            ano, mes = int(u_mes_cuotas[:4]), int(u_mes_cuotas[-2:])
+            anomes_hoy = int(datetime.strftime(self.hoy, '%Y%m'))
+            while int(u_mes_cuotas) < anomes_hoy:
+                ano, mes = int(ano), int(mes)
+                mes += 1
+                ano = ano + 1 if mes == 13 else ano
+                mes = 1 if mes == 13 else mes
+                mes = f'0{mes}' if mes < 10 else mes
+                u_mes_cuotas = f'{ano}{mes}'
+                cuotas[u_mes_cuotas] = u_cuota
             for cuota in meses_deuda:
-                total = total + cuotas[0][cuota]
+                total = total + cuotas[cuota]
             x_meses = len(meses_deuda)
             for x in range(x_meses):
                 pass
@@ -215,3 +231,12 @@ def tabla(s, n, u, d):
     return format(s, _s) + format(n, _n) + format(u, _u) + format(d, _d)
 
 salida = lambda label, dato: f'{label:\uFF65<22}{dato}'
+
+if __name__ == '__main__':
+    db_file = 'socios.json'
+    if exists(db_file):
+        with open(db_file) as _db_file:
+            db = load(_db_file)
+    socio = Socio(*db['55'].values())
+
+    print (socio.deuda)
