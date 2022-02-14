@@ -11,6 +11,8 @@ from json import load, dump
 from re import search
 from operator import itemgetter
 from time import strptime
+
+from click import edit
 from pablinet import es_numero, limpiar, numero, pausa, si_o_no, system, tam
 from libsocios import CONFIG, Deudor, Socio, tabla
 
@@ -210,6 +212,16 @@ if opcion == 'alta':
             alta.append(dato)
             if e[0] == 'numero_de_socio' and dato in db:
                 print (f'ERROR: El socio número {dato} ya existe.')
+            elif e[0] == 'dni':
+                dnis = [v['dni'] for k, v in db.items()]
+                if int(dato) in dnis:
+                    for k, v in db.items():
+                        if int(dato) == v['dni']:
+                            _v = v['nombre'] + ' ' + v['apellido']
+                            break
+                    print (f'ERROR: El DNI {dato} ya existe y es de {_v}.')
+                else:
+                    break
             else:
                 break
     socio = Socio(*alta)
@@ -227,33 +239,46 @@ elif opcion in ('editar', 'baja', 'remueve', 'lista', 'buscar', 'pago'):
     while True:
         socio_edit = []
         if opcion == 'editar':
-            print (db[valor])
+            db_editar = db[valor].copy()
+            n = f'{db_editar["numero_de_socio"]}'
+            editar = []
             for i, _campo, in enumerate(entradas):
                 while True:
                     if _campo[0] != 'es_baja':
-                        _valor = socio_edit[0] if len(socio_edit) > 0 else valor
-                        _valor = socio.numero_de_socio if _campo[0] == 'numero_de_socio' else socio_edit[0]
-                        editar = input(f'¿Desea editar {attrs_display[i]} al socio número {_valor} (s/N)? ')
-                        editar = editar if bool(editar) else 'n'
-                        if si_o_no(editar, False):
-                            if si_o_no(editar):
+                        _preg = input(f'¿Desea editar {attrs_display[i]} al socio N° {n} (s/N)? ')
+                        _preg = 'n' if len(_preg) == 0 else _preg
+                        if si_o_no(_preg, False):
+                            if si_o_no(_preg):
                                 while True:
-                                    nuevo_dato = entrada(*_campo)
-                                    socio_edit.append(nuevo_dato)
-                                    if _campo[0] == 'numero_de_socio' and (not nuevo_dato in db or str(nuevo_dato) == socio.numero_de_socio):
+                                    dato_nuevo = entrada(*_campo)
+                                    if not _campo[0] in ('numero_de_socio', 'dni'):
+                                        editar.append(dato_nuevo)
                                         break
-                                    else:
-                                        print (f'ERROR: El socio número {nuevo_dato} ya existe')
+                                    elif _campo[0] == 'numero_de_socio':
+                                        if not dato_nuevo in db or dato_nuevo == n:
+                                            editar.append(dato_nuevo)
+                                            break
+                                        else:
+                                            print (f'ERROR: El número de socio {dato_nuevo} ya existe.')
+                                    elif _campo[0] == 'dni':
+                                        dnis = [v['dni'] for k, v in db.items()]
+                                        if not str(dato_nuevo) in dnis:
+                                            editar.append(dato_nuevo)
+                                            break
+                                        else:
+                                            print (f'ERROR: El DNI {dato_nuevo} ya existe.')
                             else:
-                                socio_edit.append(socio_dict[_campo[0]])
+                                editar.append(db_editar[_campo[0]])
+                            break
                     else:
-                        socio_edit.append(db[valor][_campo[0]])
-                    break
+                        editar.append(db_editar[_campo[0]])
+                    if i == len(entradas) - 2:
+                        break
 
-            if str(socio_edit[0]) != valor:
+            if str(editar[0]) != valor:
                 db.pop(valor)
-                valor = str(socio_edit[0])
-            socio = Socio(*socio_edit)
+                valor = str(editar[0])
+            socio = Socio(*editar)
             db[valor] = socio.__dict__
             break
         elif opcion == 'baja':
